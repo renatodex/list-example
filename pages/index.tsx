@@ -1,89 +1,87 @@
 import React, { useState, Dispatch, SetStateAction } from "react"
 
+type List = {
+  items: string[]
+  label: string,
+  color: string,
+}
+
 type handleAddType = {
-  targetList: string[],
-  setTargetList: Dispatch<SetStateAction<string[]>>,
+  list: List,
+  lists: List[],
+  setLists: Dispatch<SetStateAction<List[]>>,
 }
 
 type handleMoveType = {
   item: string,
-  sourceList: string[],
-  targetList: string[],
-  setSourceList: Dispatch<SetStateAction<string[]>>,
-  setTargetList: Dispatch<SetStateAction<string[]>>
+  list: List,
+  lists: List[],
+  setLists: Dispatch<SetStateAction<List[]>>
+  movIndex: number,
 }
 
 type ListType = {
-  sourceList: string[],
-  setSourceList: Dispatch<SetStateAction<string[]>>,
-  label: string
-  prevList?: string[],
-  setPrevList?: Dispatch<SetStateAction<string[]>>,
-  nextList?: string[],
-  setNextList?: Dispatch<SetStateAction<string[]>>,
+  list: List,
+  lists: List[],
+  setLists: Dispatch<SetStateAction<List[]>>,
   handleMove: (
     props: handleMoveType
   ) => void,
   handleAdd: (
     props: handleAddType
   ) => void,
-  color: string,
 }
 
 export function List ({
-  sourceList,
-  setSourceList,
-  label,
-  prevList,
-  setPrevList,
-  nextList,
-  setNextList,
+  list,
+  lists,
+  setLists,
   handleMove,
   handleAdd,
-  color
 }:ListType) {
   return (
     <div className="border black-black">
-      <h3 className={`p-2 ${color}`}>
-        {label}
+      <h3 className={`p-2 ${list.color}`}>
+        {list.label}
         <button
           className="border border-black text-sm ml-3 p-1 rounded"
           onClick={e => handleAdd({
-            targetList: sourceList,
-            setTargetList: setSourceList
+            list,
+            lists,
+            setLists
           })}
         >+ add button</button>
       </h3>
       <ul>
-        {sourceList.map(item => (
-          <li key={item} className="p-2">
-            {prevList && setPrevList && (
+        {list.items.map((item, index) => (
+          <li key={index} className="p-2">
+            {lists.indexOf(list) > 0 && (
               <span>
                 <button
                   className="border rounded-full text-sm"
                   onClick={e => handleMove({
-                    item: item,
-                    sourceList: sourceList,
-                    setSourceList: setSourceList,
-                    targetList: prevList,
-                    setTargetList: setPrevList,
+                    movIndex: -1,
+                    item,
+                    list,
+                    lists,
+                    setLists,
                   })}
                 >&lt;</button>
                 {' '}
               </span>
             )}
             {item}
-            {nextList && setNextList && (
+            {lists.indexOf(list) != lists.length - 1 && (
               <span>
                 {' '}
                 <button
                   className="border rounded-full text-sm"
                   onClick={e => handleMove({
-                    item: item,
-                    sourceList: sourceList,
-                    setSourceList: setSourceList,
-                    targetList: nextList,
-                    setTargetList: setNextList,
+                    movIndex: +1,
+                    item,
+                    list,
+                    lists,
+                    setLists,
                   })}
                 >&gt;</button>
               </span>
@@ -96,93 +94,99 @@ export function List ({
 }
 
 export default function Index () {
-  const [list1, setList1] = useState([
-    'apple',
-    'banana',
-    'lemon'
-  ])
-
-  const [list2, setList2] = useState([
-    'farm',
-    'city',
-    'woods'
-  ])
-
-  const [list3, setList3] = useState([
-    'renato',
-    'john',
-    'sam'
+  const [lists, setLists] = useState([
+    {
+      label:'List 1',
+      color: 'bg-green-200',
+      items: [
+        'apple',
+        'banana',
+        'lemon'
+      ]
+    }, {
+      label: 'List 2',
+      color: 'bg-blue-200',
+      items: [
+        'farm',
+        'city',
+        'woods'
+      ]
+    }, {
+      label: 'List 3',
+      color: 'bg-purple-200',
+      items: [
+        'renato',
+        'john',
+        'sam'
+      ]
+    }
   ])
 
   const handleAdd = function ({
-    targetList,
-    setTargetList
+    list,
+    lists,
+    setLists
   }:handleAddType) {
     const newItem = window.prompt('Please type the name of the new item...')
 
     if (newItem) {
-      setTargetList([
-        ...targetList,
-        newItem,
-      ])
+      const newTargetList = {
+        ...list,
+        items: [
+          ...list.items,
+          newItem
+        ],
+      }
+
+      const newLists = lists.map(tempList => {
+        if (tempList == list) return newTargetList
+        return tempList
+      })
+
+      setLists(newLists)
     }
   }
 
   const handleMove = function ({
     item,
-    sourceList,
-    setSourceList,
-    targetList,
-    setTargetList
+    list,
+    lists,
+    setLists,
+    movIndex
   }:handleMoveType) {
-    const itemIndex = sourceList.indexOf(item)
+    const itemIndex = list.items.indexOf(item)
+    const listIndex = lists.indexOf(list)
+    const targetList = lists[listIndex + movIndex]
 
-    const newSourceList = [...sourceList.slice(0, itemIndex), ...sourceList.slice(itemIndex + 1)]
+    const newSourceList = {
+      ...list,
+      items: [...list.items.slice(0, itemIndex), ...list.items.slice(itemIndex + 1)]
+    }
+    const newTargetList = {
+      ...targetList,
+      items: [...targetList.items.slice(0, itemIndex), item, ...targetList.items.slice(itemIndex)]
+    }
+    const newLists = lists.map(tempList => {
+      if (tempList == list) return newSourceList
+      if (tempList == targetList) return newTargetList
+      return tempList
+    })
 
-    setSourceList(newSourceList)
-
-    const newTargetList = [...targetList.slice(0, itemIndex), item, ...targetList.slice(itemIndex)]
-
-    setTargetList(newTargetList)
+    setLists(newLists)
   }
 
   return (
     <div className="grid grid-cols-3 gap-3">
-      <List
-        sourceList={list1}
-        label={"List1"}
-        setSourceList={setList1}
-        nextList={list2}
-        setNextList={setList2}
-        handleMove={handleMove}
-        handleAdd={handleAdd}
-        color={'bg-green-200'}
-      ></List>
-
-      <List
-        sourceList={list2}
-        label={"List2"}
-        setSourceList={setList2}
-        prevList={list1}
-        setPrevList={setList1}
-        nextList={list3}
-        setNextList={setList3}
-        handleMove={handleMove}
-        handleAdd={handleAdd}
-        color={'bg-blue-200'}
-      ></List>
-
-      <List
-        sourceList={list3}
-        label={"List3"}
-        setSourceList={setList3}
-        prevList={list2}
-        setPrevList={setList2}
-        handleMove={handleMove}
-        handleAdd={handleAdd}
-        color={'bg-purple-200'}
-
-      ></List>
+      {lists.map((list, index) => (
+        <List
+          key={index}
+          list={list}
+          lists={lists}
+          setLists={setLists}
+          handleMove={handleMove}
+          handleAdd={handleAdd}
+        ></List>
+      ))}
     </div>
   )
 }
